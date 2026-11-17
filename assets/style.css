@@ -1,0 +1,120 @@
+body {
+    margin: 0;
+    font-family: 'Segoe UI', Tahoma, sans-serif;
+    background: #f4f6f9;
+}
+
+/* Sidebar */
+.sidebar {
+    width: 230px;
+    height: 100vh;
+    background: linear-gradient(180deg, #1abc9c, #16a085);
+    position: fixed;
+    color: white;
+    padding-top: 20px;
+    box-shadow: 2px 0 10px rgba(0,0,0,0.1);
+}
+
+.sidebar h2 {
+    text-align: center;
+    margin-bottom: 30px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    position: relative;
+}
+
+/* Tambahkan garis bawah dekoratif pada judul */
+.sidebar h2::after {
+    content: '';
+    display: block;
+    width: 50px;
+    height: 3px;
+    background: white;
+    margin: 8px auto 0 auto;
+    border-radius: 2px;
+}
+
+.sidebar a {
+    display: block;
+    padding: 12px 20px;
+    color: white;
+    text-decoration: none;
+    position: relative;
+    transition: 0.3s;
+}
+
+/* Tambahkan garis di kiri saat hover */
+.sidebar a::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0;
+    height: 100%;
+    width: 4px;
+    background: transparent;
+    transition: 0.3s;
+}
+
+.sidebar a:hover {
+    background: rgba(255, 255, 255, 0.1);
+}
+
+.sidebar a:hover::before {
+    background: white;
+}
+
+/* Content area */
+.content {
+    margin-left: 230px;
+    padding: 30px;
+}
+
+/* Cards */
+.card {
+    background: white;
+    padding: 25px;
+    border-radius: 10px;
+    margin-bottom: 20px;
+    border-left: 5px solid #1abc9c;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 6px 18px rgba(0,0,0,0.12);
+}
+
+/* Logout */
+.logout {
+    color: #ff6b6b;
+    font-weight: bold;
+    display: inline-block;
+    padding: 8px 12px;
+    border-radius: 6px;
+    transition: background 0.3s;
+}
+
+.logout:hover {
+    background: rgba(255, 107, 107, 0.2);
+}
+
+.register-link {
+    text-align: center;
+    margin-top: 20px;
+    font-size: 12px;
+    color: #64748b;
+}
+
+.register-link a {
+    color: #2563eb;
+    font-weight: 700;
+    text-decoration: none;
+    margin-left: 3px;
+    transition: .3s;
+}
+
+.register-link a:hover {
+    color: #1d4ed8;
+    text-decoration: underline;
+}

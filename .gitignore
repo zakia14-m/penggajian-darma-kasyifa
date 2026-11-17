@@ -1,0 +1,19 @@
+
+# File konfigurasi dan rahasia
+.env
+.env.*
+!.env.example
+/koneksi.php
+
+# Log dan file sementara
+*.log
+*.tmp
+
+# Backup
+*.bak
+*.old
+*.zip
+
+# File sistem
+.DS_Store
+Thumbs.db

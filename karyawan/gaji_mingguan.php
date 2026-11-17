@@ -1,0 +1,528 @@
+
+<?php
+session_start();
+date_default_timezone_set('Asia/Jakarta');
+include '../koneksi.php';
+
+// Proteksi login
+if (!isset($_SESSION['login']) || $_SESSION['role'] != 'karyawan') {
+    header("Location: ../login.php");
+    exit;
+}
+
+$id_karyawan = $_SESSION['id_karyawan'];
+
+$awal  = date('Y-m-d', strtotime('monday this week'));
+$akhir = date('Y-m-d', strtotime('sunday this week'));
+
+// Ambil data gaji mingguan
+$query = mysqli_query($conn, "
+    SELECT 
+        k.tanggal,
+        SUM(k.jumlah * t.tarif) AS total
+    FROM kinerja_harian k
+    JOIN tarif_pekerjaan t ON k.id_tarif = t.id_tarif
+    WHERE k.id_karyawan='$id_karyawan'
+    AND k.tanggal BETWEEN '$awal' AND '$akhir'
+    GROUP BY k.tanggal
+    ORDER BY k.tanggal ASC
+");
+
+// Hitung total mingguan
+$total_mingguan = 0;
+$dataMingguan = [];
+
+if ($query) {
+    while ($d = mysqli_fetch_assoc($query)) {
+        $dataMingguan[] = $d;
+        $total_mingguan += (float) $d['total'];
+    }
+}
+?>
+
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Gaji Mingguan | Sistem Absensi & Gaji</title>
+
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+
+<style>
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Poppins', sans-serif;
+}
+
+body {
+    background: #f4f7fc;
+    color: #1e293b;
+}
+
+/* ================= NAVBAR ================= */
+.navbar {
+    width: 100%;
+    min-height: 75px;
+    background: #101d35;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 15px 5%;
+    color: white;
+    gap: 20px;
+}
+
+.logo {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-size: 17px;
+    font-weight: 700;
+    white-space: nowrap;
+}
+
+.logo i {
+    color: #38bdf8;
+    font-size: 25px;
+}
+
+.navbar ul {
+    list-style: none;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.navbar ul li a {
+    text-decoration: none;
+    color: #cbd5e1;
+    font-size: 12px;
+    font-weight: 500;
+    padding: 10px 12px;
+    border-radius: 8px;
+    transition: .3s;
+    display: block;
+}
+
+.navbar ul li a:hover,
+.navbar ul li a.active {
+    background: #2563eb;
+    color: white;
+}
+
+.navbar ul li:last-child a {
+    background: #dc2626;
+    color: white;
+}
+
+.navbar ul li:last-child a:hover {
+    background: #b91c1c;
+}
+
+/* ================= CONTENT ================= */
+.container {
+    max-width: 1250px;
+    margin: auto;
+    padding: 40px 5%;
+}
+
+.header-content {
+    margin-bottom: 28px;
+}
+
+.header-content h1 {
+    font-size: 28px;
+    font-weight: 700;
+    color: #14213d;
+    margin-bottom: 7px;
+}
+
+.header-content p {
+    color: #64748b;
+    font-size: 13px;
+    line-height: 1.8;
+}
+
+/* ================= SUMMARY CARD ================= */
+.summary-card {
+    background: linear-gradient(135deg, #14213d, #2563eb);
+    color: white;
+    border-radius: 18px;
+    padding: 25px 28px;
+    margin-bottom: 25px;
+    box-shadow: 0 8px 25px rgba(37, 99, 235, .12);
+}
+
+.summary-label {
+    font-size: 12px;
+    color: #dbeafe;
+    margin-bottom: 8px;
+}
+
+.summary-card h2 {
+    font-size: 27px;
+    font-weight: 700;
+}
+
+.summary-icon {
+    float: right;
+    font-size: 34px;
+    color: rgba(255,255,255,.75);
+    margin-top: -38px;
+}
+
+/* ================= TABLE CARD ================= */
+.table-card {
+    background: white;
+    border-radius: 18px;
+    padding: 28px;
+    border: 1px solid #e8edf5;
+    box-shadow: 0 8px 25px rgba(15, 23, 42, .05);
+}
+
+.table-header {
+    margin-bottom: 22px;
+}
+
+.table-header h2 {
+    color: #14213d;
+    font-size: 18px;
+    font-weight: 700;
+}
+
+.table-header p {
+    color: #64748b;
+    font-size: 12px;
+    margin-top: 4px;
+}
+
+/* ================= RANGE ================= */
+.range {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 12px;
+    padding: 9px 13px;
+    background: #eff6ff;
+    border: 1px solid #dbeafe;
+    border-radius: 9px;
+    color: #1d4ed8;
+    font-size: 12px;
+    font-weight: 500;
+}
+
+/* ================= TABLE ================= */
+.table-wrapper {
+    width: 100%;
+    overflow-x: auto;
+    border-radius: 10px;
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    min-width: 500px;
+}
+
+thead th {
+    background: #eff6ff;
+    color: #1d4ed8;
+    font-size: 12px;
+    font-weight: 600;
+    padding: 15px 14px;
+    text-align: left;
+}
+
+tbody td,
+tfoot td {
+    padding: 15px 14px;
+    border-bottom: 1px solid #e8edf5;
+    color: #475569;
+    font-size: 12px;
+}
+
+tbody tr:hover {
+    background: #f8fafc;
+}
+
+tbody tr:last-child td {
+    border-bottom: none;
+}
+
+tfoot td {
+    background: #f8fafc;
+    color: #14213d;
+    font-weight: 700;
+}
+
+.total {
+    color: #16a34a !important;
+    font-weight: 700;
+    white-space: nowrap;
+}
+
+/* ================= EMPTY STATE ================= */
+.empty-state {
+    text-align: center;
+    padding: 45px 15px;
+    color: #64748b;
+}
+
+.empty-state i {
+    font-size: 38px;
+    color: #94a3b8;
+    margin-bottom: 14px;
+}
+
+.empty-state h3 {
+    color: #334155;
+    font-size: 15px;
+    margin-bottom: 6px;
+}
+
+.empty-state p {
+    font-size: 12px;
+    line-height: 1.7;
+}
+
+/* ================= FOOTER ================= */
+.footer {
+    text-align: center;
+    padding: 22px;
+    color: #94a3b8;
+    font-size: 11px;
+}
+
+/* ================= RESPONSIVE ================= */
+@media (max-width: 900px) {
+    .navbar {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .navbar ul {
+        width: 100%;
+    }
+}
+
+@media (max-width: 600px) {
+    .navbar {
+        padding: 18px 5%;
+    }
+
+    .navbar ul {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        width: 100%;
+    }
+
+    .navbar ul li a {
+        text-align: center;
+        font-size: 11px;
+    }
+
+    .container {
+        padding-top: 28px;
+    }
+
+    .header-content h1 {
+        font-size: 23px;
+    }
+
+    .summary-card {
+        padding: 22px;
+    }
+
+    .summary-card h2 {
+        font-size: 23px;
+    }
+
+    .table-card {
+        padding: 20px 15px;
+    }
+
+    .table-header h2 {
+        font-size: 16px;
+    }
+}
+</style>
+</head>
+
+<body>
+
+<!-- ================= NAVBAR ================= -->
+<nav class="navbar">
+
+    <div class="logo">
+        <i class="fa-solid fa-building-shield"></i>
+        <span>Sistem Absensi & Gaji</span>
+    </div>
+
+    <ul>
+        <li>
+            <a href="dashboard.php">
+                <i class="fa-solid fa-house"></i> Dashboard
+            </a>
+        </li>
+
+        <li>
+            <a href="absen.php">
+                <i class="fa-solid fa-calendar-check"></i> Absen
+            </a>
+        </li>
+
+        <li>
+            <a href="gaji_harian.php">
+                <i class="fa-solid fa-money-bill-wave"></i> Gaji Harian
+            </a>
+        </li>
+
+        <li>
+            <a href="gaji_mingguan.php" class="active">
+                <i class="fa-solid fa-calendar-week"></i> Slip Gaji Mingguan
+            </a>
+        </li>
+
+        <li>
+            <a href="../logout.php" onclick="return confirm('Yakin ingin keluar dari akun?')">
+                <i class="fa-solid fa-right-from-bracket"></i> Logout
+            </a>
+        </li>
+    </ul>
+
+</nav>
+
+<!-- ================= CONTENT ================= -->
+<main class="container">
+
+    <div class="header-content">
+        <h1>Slip Gaji Mingguan</h1>
+        <p>
+            Lihat ringkasan pendapatan berdasarkan hasil pekerjaan
+            Anda selama minggu ini.
+        </p>
+    </div>
+
+    <!-- TOTAL GAJI -->
+    <section class="summary-card">
+
+        <div class="summary-label">
+            Total Gaji Minggu Ini
+        </div>
+
+        <h2>
+            Rp<?= number_format($total_mingguan, 0, ',', '.'); ?>
+        </h2>
+
+        <i class="fa-solid fa-wallet summary-icon"></i>
+
+    </section>
+
+    <!-- REKAP GAJI -->
+    <section class="table-card">
+
+        <div class="table-header">
+
+            <h2>
+                <i class="fa-solid fa-calendar-week" style="color:#2563eb;margin-right:7px;"></i>
+                Rekap Gaji Mingguan
+            </h2>
+
+            <p>
+                Rincian total pendapatan setiap hari dalam periode minggu ini.
+            </p>
+
+            <div class="range">
+                <i class="fa-solid fa-calendar-days"></i>
+
+                <?= date('d M Y', strtotime($awal)); ?>
+                –
+                <?= date('d M Y', strtotime($akhir)); ?>
+            </div>
+
+        </div>
+
+        <?php if (count($dataMingguan) > 0) { ?>
+
+            <div class="table-wrapper">
+
+                <table>
+
+                    <thead>
+                        <tr>
+                            <th>No.</th>
+                            <th>Tanggal</th>
+                            <th>Total Gaji</th>
+                        </tr>
+                    </thead>
+
+                    <tbody>
+
+                        <?php $no = 1; ?>
+
+                        <?php foreach ($dataMingguan as $d) { ?>
+
+                            <tr>
+                                <td><?= $no++; ?></td>
+
+                                <td>
+                                    <?= date('d M Y', strtotime($d['tanggal'])); ?>
+                                </td>
+
+                                <td class="total">
+                                    Rp<?= number_format((float)$d['total'], 0, ',', '.'); ?>
+                                </td>
+                            </tr>
+
+                        <?php } ?>
+
+                    </tbody>
+
+                    <tfoot>
+                        <tr>
+                            <td colspan="2">TOTAL MINGGUAN</td>
+
+                            <td class="total">
+                                Rp<?= number_format($total_mingguan, 0, ',', '.'); ?>
+                            </td>
+                        </tr>
+                    </tfoot>
+
+                </table>
+
+            </div>
+
+        <?php } else { ?>
+
+            <div class="empty-state">
+
+                <i class="fa-solid fa-calendar-xmark"></i>
+
+                <h3>Belum Ada Data Gaji Mingguan</h3>
+
+                <p>
+                    Data pendapatan akan muncul setelah kinerja pekerjaan
+                    Anda dicatat oleh admin pada minggu ini.
+                </p>
+
+            </div>
+
+        <?php } ?>
+
+    </section>
+
+</main>
+
+<!-- ================= FOOTER ================= -->
+<footer class="footer">
+    &copy; <?= date('Y'); ?> Sistem Absensi & Gaji Darma Kasyifa. All Rights Reserved.
+</footer>
+
+</body>
+</html>
